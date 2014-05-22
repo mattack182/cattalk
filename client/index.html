@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en" ng-app>
+  <head>
+    <title>Chat Example</title>
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0,  maximum-scale=1, user-scalable=0">
+    <meta charset="UTF-8">
+    
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/css/bootstrap-responsive.min.css">
+    <style>
+    
+    #login{
+        background: #fff;
+        padding: 0;
+        margin: 0;
+    }
+    
+    #login div {
+        margin: 0 center;
+
+    }
+    #chatAll {
+        display: none;
+    }
+    
+    #tab_users {
+        display: none;
+
+    }
+
+    
+    @media (min-width: 980px){
+      body {
+        padding-top: 60px;
+      }
+      #chat{
+        border: 0 solid #000;
+        height: 400px;
+        overflow-y: auto;
+      }
+    }
+    
+    @media (max-width: 980px){
+      #chat{
+        border: 0 solid #000;
+        overflow-y: auto;
+      }
+      #chattab {
+          height: 200px;
+      }
+    }
+    
+
+ 
+    
+    </style>
+    <script>
+        function toBottom(){
+            window.scrollTo(0, document.body.scrollHeight);
+        }
+        function toBottomDiv(){
+            var objDiv = document.getElementById('chat');
+            objDiv.scrollTop = objDiv.scrollHeight;
+        }
+
+        function goChat(){
+            $('#myModal').modal('hide');
+            $( "#login" ).hide();
+            $("#chatAll").show();
+        }
+
+        
+    
+      function ChatController($scope) {
+        var socket = io.connect();
+
+        // Exibe a tela de login no inicio
+        $('#myModal').modal('show');
+
+        $scope.messages = [];
+        $scope.roster = [];
+        $scope.roster_size = '';
+        $scope.name = '';
+        $scope.text = '';
+
+
+        // socket.on('connect', function () {
+        //  $scope.setName();
+        // });
+
+        socket.on('connect', function () {
+          $scope.setName();
+        });
+
+
+        socket.on('message', function (msg) {
+            $scope.messages.push(msg);
+            $scope.$apply();
+            toBottomDiv();
+        });
+
+        socket.on('roster', function (names) {
+          $scope.roster = names;
+          $scope.$apply();
+        });
+
+        $scope.send = function send() {
+          console.log('Sending message:', $scope.text);
+          socket.emit('message', $scope.text);
+          $scope.text = '';
+        };
+
+        $scope.setName = function setName() {
+            socket.emit('identify', $scope.name);
+        };
+      }
+    </script>
+  </head>
+  <body>
+  
+    <div class="container" ng-controller="ChatController">
+      
+      <div class="navbar navbar-fixed-top" style="background: #000">
+        <div class="navbar-inner" style="background: #000">
+          <div style="text-align: center">
+            <img src="img/cat_logo_final.png" width="185" height="45">
+          </div>
+          </div>
+      </div>
+      
+
+      
+<!-- Modal -->
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" data-show="true" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <div class="modal-header" style="background: #000">
+            <div style="text-align: center">
+                <img src="img/cat_logo_final.png" width="185" height="45">
+                <!-- <h4 class="modal-title" id="myModalLabel"></h4> -->
+            </div>
+      </div>
+      
+      <div class="modal-body" style="text-align: center">
+            <div class="input-append">
+                <input type="text" ng-model="name" ng-change="setName()" placeholder="Digite seu nome">
+                <button type="submit" class="btn btn-primary" onclick="goChat()">Entrar</button>
+            </div>
+      </div>
+   
+      <div class="modal-footer">
+         <!--
+            <button type="button" class="btn btn-primary btn-lg btn-block" onclick="goChat()">Entrar</button>
+      
+          -->
+
+      </div>
+      
+    </div>
+  </div>
+</div>
+      
+      <!--
+      
+            <div id="login">
+                  <div class="input-append">
+                    <input type="text" ng-model="name" ng-change="setName()" placeholder="Digite seu nome">
+                    <div class="btn btn-primary" onclick="goChat()">Salvar</div>
+                  </div>
+            </div>
+      -->
+        
+    <div id="chatAll">
+        <div class="row">
+            
+            <!-- TABBABLE-->
+            <div class="tabbable">
+                
+                <!-- TABS-->
+                <ul class="nav nav-tabs">
+                    <li class="active"><a href="#tab1" data-toggle="tab">Chat</a></li>
+                    <li><a href="#tab2" data-toggle="tab">Usuários</a></li>
+                </ul>
+        
+        
+        
+            <!-- TAB CONTENT -->
+            <div class="tab-content">
+                
+                <!-- TAB 1 -->
+                <div id="tab1" class="tab-pane active">
+                
+                <div class="span9" id="chat" onload="toBottomDiv()">
+                        <div id="chattab">
+                            <table class="table table-condensed">
+                                <thead colspan="2">
+                                    <tr>
+                                        <th class="nav-header">Mensagens Enviadas</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr ng-repeat="msg in messages">
+                                        <td class="span2" ng-bind="msg.name+': '+msg.text"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                
+                    <div class="span3 offset3">
+                        <div class="row controls">
+                            <form ng-submit="send()">
+                                <div class="input-append">
+                                    <input type="text" ng-model="text" placeholder="Mensagem">
+                                    <input type="submit" class="btn btn-primary" value="Enviar" ng-disabled="!text">
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                
+              
+                    
+                </div>
+                
+                <!-- TAB 2 -->
+                <div id="tab2" class="tab-pane">
+                
+                    <div class="span3">
+                        <ul class="nav nav-list well well-small">
+                            <li class="nav-header">Usuários Online</li>
+                            <li ng-repeat="user in roster" ng-bind="user"></li>
+                        </ul>
+                    </div>
+                    
+                    <!-- FIM -->
+                    
+                </div>
+            </div>
+    </div>
+</div>
+        
+  
+            
+     
+          
+      
+      
+    </div>
+    <script src="/js/jquery.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/bootstrap.min.js"></script>
+    <script src="/js/angular.min.js"></script>
+    </body>
+</html>
+       
